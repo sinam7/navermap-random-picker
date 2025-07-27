@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "네이버 지도 랜덤 우클릭",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "네이버 지도 위 랜덤 위치에 우클릭(contextmenu) 이벤트를 실행합니다.",
   "permissions": [
     "scripting",
@@ -9,6 +9,12 @@
   ],
   "host_permissions": [
     "https://map.naver.com/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*"],
+      "matches": ["https://map.naver.com/*"]
+    }
   ],
   "icons": {
     "128": "assets/icon.png" 

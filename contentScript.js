@@ -6,13 +6,18 @@
   }
   window.naverMapRandomClickExecuting = true; // 실행 중 플래그 설정
   const overlayId = 'naverMapRandomClickOverlay'; // 오버레이 식별 ID
+  const pinImageId = 'naverMapRandomClickPin'; // 핀 이미지 식별 ID
 
   console.log("네이버 지도 랜덤 우클릭 스크립트 시작 (v4 - 보이는 지도 중앙 정렬).");
 
-  // 이전 오버레이 제거 (있다면)
+  // 이전 오버레이 및 핀 이미지 제거 (있다면)
   const existingOverlay = document.getElementById(overlayId);
   if (existingOverlay) {
     existingOverlay.remove();
+  }
+  const existingPin = document.getElementById(pinImageId);
+  if (existingPin) {
+    existingPin.remove();
   }
   // 이전 클릭 리스너 제거 (안전장치)
   if (window.removeNaverMapOverlayOnClick) {
@@ -20,7 +25,7 @@
     window.removeNaverMapOverlayOnClick = null;
   }
 
-  const canvasSelector = "#app-layout > div.sc-1s2kvgn.gRrCqu > div.sc-6t4syl.lijNcU > div > div:nth-child(1) > div > div.mapboxgl-canvas-container.mapboxgl-interactive > canvas";
+  const canvasSelector = "canvas";
   const canvas = document.querySelector(canvasSelector);
 
   if (!canvas) {
@@ -116,23 +121,65 @@
     alert("지도에 이벤트를 발생시키는 중 오류가 발생했습니다.");
   }
 
-  // --- 4. 오버레이 제거를 위한 클릭 리스너 추가 --- 
+  // --- 4. 핀 이미지 표시 ---
+  const pinImage = document.createElement('img');
+  pinImage.id = pinImageId;
+  pinImage.src = chrome.runtime.getURL('assets/pin.png');
+  pinImage.style.position = 'absolute';
+  pinImage.style.zIndex = '10001'; // 오버레이보다 위에 표시
+  pinImage.style.pointerEvents = 'none';
+  pinImage.style.width = '32px'; // 핀 이미지 크기 설정 (필요에 따라 조정)
+  pinImage.style.height = 'auto';
+  
+  // 이미지 로드 완료 후 위치 설정
+  pinImage.onload = () => {
+    const pinWidth = pinImage.offsetWidth;
+    const pinHeight = pinImage.offsetHeight;
+    
+    // 좌측 하단 꼭짓점을 클릭 지점에 맞춤
+    pinImage.style.left = `${clientX}px`;
+    pinImage.style.top = `${clientY - pinHeight}px`;
+    
+    console.log(`핀 이미지 표시: 크기=${pinWidth}x${pinHeight}, 위치=(${clientX}, ${clientY - pinHeight})`);
+  };
+  
+  // 이미지 로드 실패 시 기본 위치 설정
+  pinImage.onerror = () => {
+    console.warn("핀 이미지 로드 실패, 기본 크기로 설정");
+    const defaultHeight = 32; // 기본 높이
+    pinImage.style.left = `${clientX}px`;
+    pinImage.style.top = `${clientY - defaultHeight}px`;
+  };
+  
+  document.body.appendChild(pinImage);
+
+  // --- 5. 오버레이 제거를 위한 클릭 리스너 추가 --- 
   window.removeNaverMapOverlayOnClick = (event) => {
     const overlayElement = document.getElementById(overlayId);
-    if (!overlayElement) {
+    const pinElement = document.getElementById(pinImageId);
+    
+    if (!overlayElement && !pinElement) {
       document.removeEventListener('click', window.removeNaverMapOverlayOnClick, true);
       window.removeNaverMapOverlayOnClick = null;
       return;
     }
-    const overlayRect = overlayElement.getBoundingClientRect();
-    if (event.clientX < overlayRect.left || event.clientX > overlayRect.right ||
-        event.clientY < overlayRect.top || event.clientY > overlayRect.bottom) {
-      console.log("오버레이 외부 클릭 감지됨. 오버레이 제거.");
-      overlayElement.remove();
+    
+    let clickOutsideOverlay = true;
+    
+    if (overlayElement) {
+      const overlayRect = overlayElement.getBoundingClientRect();
+      if (event.clientX >= overlayRect.left && event.clientX <= overlayRect.right &&
+          event.clientY >= overlayRect.top && event.clientY <= overlayRect.bottom) {
+        clickOutsideOverlay = false;
+      }
+    }
+    
+    if (clickOutsideOverlay) {
+      console.log("오버레이 외부 클릭 감지됨. 오버레이 및 핀 이미지 제거.");
+      if (overlayElement) overlayElement.remove();
+      if (pinElement) pinElement.remove();
       document.removeEventListener('click', window.removeNaverMapOverlayOnClick, true);
       window.removeNaverMapOverlayOnClick = null;
-    } else {
-       // console.log("오버레이 내부 클릭 감지됨. 오버레이 유지."); // 내부 클릭 로그는 제거
     }
   };
   document.addEventListener('click', window.removeNaverMapOverlayOnClick, true);
