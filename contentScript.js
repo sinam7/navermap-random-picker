@@ -116,6 +116,33 @@
     } else {
         console.warn("기본 contextmenu 동작 방지 안됨.");
     }
+
+    // --- btn_address 버튼 자동 클릭 ---
+    setTimeout(() => {
+      console.log("btn_address 버튼 검색 시작...");
+      const maxAttempts = 30; // 최대 30번 시도 (3초)
+      let attempts = 0;
+
+      const findAndClickButton = () => {
+        attempts++;
+        const btnAddress = document.querySelector('.btn_address');
+
+        if (btnAddress) {
+          console.log(`btn_address 버튼 발견 (시도 ${attempts}번째)`);
+          btnAddress.click();
+          console.log("btn_address 버튼 클릭 완료");
+          return;
+        }
+
+        if (attempts < maxAttempts) {
+          setTimeout(findAndClickButton, 100); // 100ms마다 재시도
+        } else {
+          console.warn("btn_address 버튼을 찾지 못했습니다 (타임아웃)");
+        }
+      };
+
+      findAndClickButton();
+    }, 100); // 우클릭 후 100ms 대기
   } catch (error) {
     console.error("이벤트 발생 중 오류:", error);
     alert("지도에 이벤트를 발생시키는 중 오류가 발생했습니다.");
