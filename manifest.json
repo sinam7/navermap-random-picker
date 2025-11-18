@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "네이버 지도 랜덤 우클릭",
-  "version": "1.1.0",
-  "description": "네이버 지도 위 랜덤 위치에 우클릭(contextmenu) 이벤트를 실행합니다.",
+  "version": "1.1.1",
+  "description": "네이버 지도 위 랜덤 위치를 찍어, 위치를 보여줍니다.",
   "permissions": [
     "scripting",
     "activeTab"

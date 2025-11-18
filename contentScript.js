@@ -8,6 +8,13 @@
   const overlayId = 'naverMapRandomClickOverlay'; // 오버레이 식별 ID
   const pinImageId = 'naverMapRandomClickPin'; // 핀 이미지 식별 ID
 
+  // 상수 정의
+  const MAX_BUTTON_FIND_ATTEMPTS = 50; // 버튼 검색 최대 시도 횟수
+  const BUTTON_RETRY_INTERVAL_MS = 10; // 버튼 검색 재시도 간격 (밀리초)
+  const BUTTON_SEARCH_DELAY_MS = 100; // 우클릭 후 버튼 검색 시작 대기 시간 (밀리초)
+  const PIN_IMAGE_WIDTH_PX = 32; // 핀 이미지 너비 (픽셀)
+  const DEFAULT_PIN_HEIGHT_PX = 32; // 핀 이미지 기본 높이 (픽셀)
+
   console.log("네이버 지도 랜덤 우클릭 스크립트 시작 (v4 - 보이는 지도 중앙 정렬).");
 
   // 이전 오버레이 및 핀 이미지 제거 (있다면)
@@ -116,6 +123,32 @@
     } else {
         console.warn("기본 contextmenu 동작 방지 안됨.");
     }
+
+    // --- btn_address 버튼 자동 클릭 ---
+    setTimeout(() => {
+      console.log("btn_address 버튼 검색 시작...");
+      let attempts = 0;
+
+      const findAndClickButton = () => {
+        attempts++;
+        const btnAddress = document.querySelector('.btn_address');
+
+        if (btnAddress) {
+          console.log(`btn_address 버튼 발견 (시도 ${attempts}번째)`);
+          btnAddress.click();
+          console.log("btn_address 버튼 클릭 완료");
+          return;
+        }
+
+        if (attempts < MAX_BUTTON_FIND_ATTEMPTS) {
+          setTimeout(findAndClickButton, BUTTON_RETRY_INTERVAL_MS);
+        } else {
+          console.warn("btn_address 버튼을 찾지 못했습니다 (타임아웃)");
+        }
+      };
+
+      findAndClickButton();
+    }, BUTTON_SEARCH_DELAY_MS);
   } catch (error) {
     console.error("이벤트 발생 중 오류:", error);
     alert("지도에 이벤트를 발생시키는 중 오류가 발생했습니다.");
@@ -128,7 +161,7 @@
   pinImage.style.position = 'absolute';
   pinImage.style.zIndex = '10001'; // 오버레이보다 위에 표시
   pinImage.style.pointerEvents = 'none';
-  pinImage.style.width = '32px'; // 핀 이미지 크기 설정 (필요에 따라 조정)
+  pinImage.style.width = `${PIN_IMAGE_WIDTH_PX}px`;
   pinImage.style.height = 'auto';
   
   // 이미지 로드 완료 후 위치 설정
@@ -146,26 +179,31 @@
   // 이미지 로드 실패 시 기본 위치 설정
   pinImage.onerror = () => {
     console.warn("핀 이미지 로드 실패, 기본 크기로 설정");
-    const defaultHeight = 32; // 기본 높이
     pinImage.style.left = `${clientX}px`;
-    pinImage.style.top = `${clientY - defaultHeight}px`;
+    pinImage.style.top = `${clientY - DEFAULT_PIN_HEIGHT_PX}px`;
   };
   
   document.body.appendChild(pinImage);
 
-  // --- 5. 오버레이 제거를 위한 클릭 리스너 추가 --- 
+  // --- 5. 오버레이 제거를 위한 클릭 리스너 추가 ---
   window.removeNaverMapOverlayOnClick = (event) => {
+    // btn_address 버튼 클릭인지 확인 (버튼 클릭 시 오버레이 유지)
+    if (event.target.closest('.btn_address')) {
+      console.log("btn_address 버튼 클릭 감지됨. 오버레이 및 핀 이미지 유지.");
+      return;
+    }
+
     const overlayElement = document.getElementById(overlayId);
     const pinElement = document.getElementById(pinImageId);
-    
+
     if (!overlayElement && !pinElement) {
       document.removeEventListener('click', window.removeNaverMapOverlayOnClick, true);
       window.removeNaverMapOverlayOnClick = null;
       return;
     }
-    
+
     let clickOutsideOverlay = true;
-    
+
     if (overlayElement) {
       const overlayRect = overlayElement.getBoundingClientRect();
       if (event.clientX >= overlayRect.left && event.clientX <= overlayRect.right &&
@@ -173,7 +211,7 @@
         clickOutsideOverlay = false;
       }
     }
-    
+
     if (clickOutsideOverlay) {
       console.log("오버레이 외부 클릭 감지됨. 오버레이 및 핀 이미지 제거.");
       if (overlayElement) overlayElement.remove();
