@@ -180,19 +180,25 @@
   
   document.body.appendChild(pinImage);
 
-  // --- 5. 오버레이 제거를 위한 클릭 리스너 추가 --- 
+  // --- 5. 오버레이 제거를 위한 클릭 리스너 추가 ---
   window.removeNaverMapOverlayOnClick = (event) => {
+    // btn_address 버튼 클릭인지 확인 (버튼 클릭 시 오버레이 유지)
+    if (event.target.closest('.btn_address')) {
+      console.log("btn_address 버튼 클릭 감지됨. 오버레이 및 핀 이미지 유지.");
+      return;
+    }
+
     const overlayElement = document.getElementById(overlayId);
     const pinElement = document.getElementById(pinImageId);
-    
+
     if (!overlayElement && !pinElement) {
       document.removeEventListener('click', window.removeNaverMapOverlayOnClick, true);
       window.removeNaverMapOverlayOnClick = null;
       return;
     }
-    
+
     let clickOutsideOverlay = true;
-    
+
     if (overlayElement) {
       const overlayRect = overlayElement.getBoundingClientRect();
       if (event.clientX >= overlayRect.left && event.clientX <= overlayRect.right &&
@@ -200,7 +206,7 @@
         clickOutsideOverlay = false;
       }
     }
-    
+
     if (clickOutsideOverlay) {
       console.log("오버레이 외부 클릭 감지됨. 오버레이 및 핀 이미지 제거.");
       if (overlayElement) overlayElement.remove();
