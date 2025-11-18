@@ -120,7 +120,7 @@
     // --- btn_address 버튼 자동 클릭 ---
     setTimeout(() => {
       console.log("btn_address 버튼 검색 시작...");
-      const maxAttempts = 30; // 최대 30번 시도 (3초)
+      const maxAttempts = 50; // 최대 50번 시도 (0.5초)
       let attempts = 0;
 
       const findAndClickButton = () => {
@@ -135,7 +135,7 @@
         }
 
         if (attempts < maxAttempts) {
-          setTimeout(findAndClickButton, 100); // 100ms마다 재시도
+          setTimeout(findAndClickButton, 10); // 10ms마다 재시도
         } else {
           console.warn("btn_address 버튼을 찾지 못했습니다 (타임아웃)");
         }
